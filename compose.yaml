@@ -1,0 +1,7 @@
+﻿services:
+  chatbot_backend.api:
+    image: chatbot_backend.api
+    build:
+      context: .
+      dockerfile: chatbot_backend/Dockerfile
+
