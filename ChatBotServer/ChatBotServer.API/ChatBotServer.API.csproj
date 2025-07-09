@@ -10,11 +10,9 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.7"/>
     </ItemGroup>
-
+    
     <ItemGroup>
-      <Content Include="..\.dockerignore">
-        <Link>.dockerignore</Link>
-      </Content>
+      <ProjectReference Include="..\ChatBotServer.Infrastructure\ChatBotServer.Infrastructure.csproj" />
     </ItemGroup>
 
 </Project>
