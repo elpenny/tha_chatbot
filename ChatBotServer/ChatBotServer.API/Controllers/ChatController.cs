@@ -1,3 +1,5 @@
+using ChatBotServer.Application.Features.Chat.Queries;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChatBotServer.API.Controllers;
@@ -6,19 +8,12 @@ namespace ChatBotServer.API.Controllers;
 [Route("api/[controller]")]
 public class ChatController : ControllerBase
 {
-    private static readonly string[] StaticResponses = new[]
+    private readonly IMediator _mediator;
+
+    public ChatController(IMediator mediator)
     {
-        "Hello! How can I help you today?",
-        "That's an interesting question, let me think about it.",
-        "I understand what you're asking about.",
-        "Thank you for sharing that with me.",
-        "I'm here to assist you with any questions you might have.",
-        "That sounds like something worth exploring further.",
-        "I appreciate you taking the time to ask me that.",
-        "Let me provide you with a helpful response.",
-        "I'm processing your request and will respond shortly.",
-        "That's a great point you've brought up."
-    };
+        _mediator = mediator;
+    }
 
     [HttpPost("message")]
     public async Task<IActionResult> GetNextMessage([FromBody] ChatMessageRequest request, CancellationToken cancellationToken = default)
@@ -29,9 +24,15 @@ public class ChatController : ControllerBase
         Response.Headers.Add("Connection", "keep-alive");
         Response.Headers.Add("Access-Control-Allow-Origin", "*");
 
-        // Simple static response logic
-        var random = new Random();
-        var response = StaticResponses[random.Next(StaticResponses.Length)];
+        // Get response from MediatR handler
+        var query = new GetChatResponseQuery
+        {
+            Content = request.Content,
+            ConversationId = request.ConversationId
+        };
+        
+        var result = await _mediator.Send(query, cancellationToken);
+        var response = result.Content;
 
         try
         {

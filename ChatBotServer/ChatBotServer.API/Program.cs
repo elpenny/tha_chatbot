@@ -8,6 +8,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ChatBotServer.Application.DependencyInjection).Assembly));
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
