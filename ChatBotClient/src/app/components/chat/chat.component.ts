@@ -13,6 +13,8 @@ interface ChatMessage {
   content: string;
   isUser: boolean;
   isTyping?: boolean;
+  messageId?: number;
+  rating?: number | null;
 }
 
 @Component({
@@ -36,12 +38,26 @@ interface ChatMessage {
         
         <mat-card-content class="chat-content">
           <div class="messages-container" #messagesContainer>
-            <div *ngFor="let message of messages" 
+            <div *ngFor="let message of messages; trackBy: trackByMessageId" 
                  class="message" 
                  [ngClass]="{'user-message': message.isUser, 'bot-message': !message.isUser}">
               <div class="message-content">
                 {{ message.content }}
                 <mat-spinner *ngIf="message.isTyping" diameter="16"></mat-spinner>
+              </div>
+              <div class="message-actions" *ngIf="!message.isUser && !message.isTyping && message.messageId">
+                <button mat-icon-button 
+                        (click)="rateMessage(message.messageId!, 1)"
+                        [class.rated]="message.rating === 1"
+                        class="rating-button thumbs-up">
+                  <mat-icon>thumb_up</mat-icon>
+                </button>
+                <button mat-icon-button 
+                        (click)="rateMessage(message.messageId!, -1)"
+                        [class.rated]="message.rating === -1"
+                        class="rating-button thumbs-down">
+                  <mat-icon>thumb_down</mat-icon>
+                </button>
               </div>
             </div>
           </div>
@@ -50,7 +66,7 @@ interface ChatMessage {
             <mat-form-field class="message-input" appearance="outline">
               <input matInput 
                      [(ngModel)]="currentMessage" 
-                     placeholder="Type your message..."
+                     placeholder="Start chatting..."
                      (keyup.enter)="sendMessage()"
                      [disabled]="isLoading">
             </mat-form-field>
@@ -138,11 +154,41 @@ interface ChatMessage {
     .input-container {
       display: flex;
       gap: 12px;
-      align-items: flex-end;
+      align-items: flex-start;
     }
     
     .message-input {
       flex: 1;
+    }
+    
+    .message-actions {
+      display: flex;
+      gap: 4px;
+      margin-top: 8px;
+      justify-content: flex-start;
+    }
+    
+    .rating-button {
+      width: 32px;
+      height: 32px;
+      color: #666;
+      transition: color 0.2s ease;
+    }
+    
+    .rating-button:hover {
+      color: #333;
+    }
+    
+    .rating-button.rated.thumbs-up {
+      color: #4caf50;
+    }
+    
+    .rating-button.rated.thumbs-down {
+      color: #f44336;
+    }
+    
+    .rating-button.rated:hover {
+      color: inherit;
     }
   `]
 })
@@ -161,11 +207,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    // Add welcome message
-    this.messages.push({
-      content: 'Hello! How can I help you today?',
-      isUser: false
-    });
+    // No initial welcome message
   }
 
   ngOnDestroy() {
@@ -221,6 +263,10 @@ export class ChatComponent implements OnInit, OnDestroy {
             if (data.isComplete) {
               botMessage.isTyping = false;
               this.isLoading = false;
+              // Set message ID when response is complete - we'll need to get this from conversation history
+              if (data.conversationId) {
+                this.loadConversationHistory(data.conversationId);
+              }
               this.changeDetectorRef.detectChanges(); // Force UI update
             }
           } catch (error) {
@@ -265,5 +311,77 @@ export class ChatComponent implements OnInit, OnDestroy {
       
       this.changeDetectorRef.detectChanges();
     }
+  }
+
+  trackByMessageId(index: number, message: ChatMessage): any {
+    return message.messageId || index;
+  }
+
+  rateMessage(messageId: number, rating: number) {
+    // Find the message and update its rating optimistically
+    const message = this.messages.find(m => m.messageId === messageId);
+    if (message) {
+      const newRating = message.rating === rating ? null : rating; // Toggle rating if same value
+      message.rating = newRating;
+      
+      this.chatService.updateMessageRating(messageId, { rating: newRating })
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            console.log('Rating updated successfully');
+          },
+          error: (error) => {
+            console.error('Error updating rating:', error);
+            // Revert the rating on error
+            message.rating = message.rating === rating ? null : rating;
+          }
+        });
+    }
+  }
+
+  private loadConversationHistory(conversationId: number) {
+    this.chatService.getConversationHistory(conversationId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          if (result.messages) {
+            // Sort messages by creation time to ensure proper order
+            const sortedHistoryMessages = [...result.messages].sort((a, b) => 
+              new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+            );
+            
+            // Track indices for user and bot messages separately
+            let userMessageIndex = 0;
+            let botMessageIndex = 0;
+            
+            sortedHistoryMessages.forEach(historyMessage => {
+              const isUser = historyMessage.role === 0; // 0 = User, 1 = Bot
+              
+              // Find the corresponding message by matching role and index
+              const currentMessages = this.messages.filter(m => m.isUser === isUser);
+              const messageIndex = isUser ? userMessageIndex : botMessageIndex;
+              
+              if (messageIndex < currentMessages.length) {
+                const currentMessage = currentMessages[messageIndex];
+                if (historyMessage.id) {
+                  currentMessage.messageId = historyMessage.id;
+                  currentMessage.rating = historyMessage.rating;
+                }
+              }
+              
+              if (isUser) {
+                userMessageIndex++;
+              } else {
+                botMessageIndex++;
+              }
+            });
+            
+            this.changeDetectorRef.detectChanges();
+          }
+        },
+        error: (error) => {
+          console.error('Error loading conversation history:', error);
+        }
+      });
   }
 }
