@@ -26,13 +26,16 @@ export class ChatService {
    */
   sendMessage(request: ChatMessageRequest): Observable<SSEMessage> {
     return new Observable<SSEMessage>(observer => {
+      const abortController = new AbortController();
+      
       fetch(`${this.baseUrl}/message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'text/event-stream'
         },
-        body: JSON.stringify(request)
+        body: JSON.stringify(request),
+        signal: abortController.signal
       })
       .then(response => {
         if (!response.ok) {
@@ -93,7 +96,7 @@ export class ChatService {
       
       // Cleanup function
       return () => {
-        // Abort fetch if still running
+        abortController.abort();
       };
     });
   }

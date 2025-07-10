@@ -7,7 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ChatService, ChatMessageRequest, SSEMessage } from '../../api/chat.service';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, Subscription } from 'rxjs';
 
 interface ChatMessage {
   content: string;
@@ -57,8 +57,15 @@ interface ChatMessage {
             <button mat-fab 
                     color="primary" 
                     (click)="sendMessage()"
-                    [disabled]="!currentMessage.trim() || isLoading">
+                    [disabled]="!currentMessage.trim() || isLoading"
+                    *ngIf="!isLoading">
               <mat-icon>send</mat-icon>
+            </button>
+            <button mat-fab 
+                    color="warn" 
+                    (click)="cancelMessage()"
+                    *ngIf="isLoading">
+              <mat-icon>stop</mat-icon>
             </button>
           </div>
         </mat-card-content>
@@ -146,6 +153,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   conversationId: number | null = null;
   
   private destroy$ = new Subject<void>();
+  private currentStreamingSubscription: Subscription | null = null;
 
   constructor(
     private chatService: ChatService,
@@ -192,7 +200,7 @@ export class ChatComponent implements OnInit, OnDestroy {
       conversationId: this.conversationId
     };
 
-    this.chatService.sendMessage(request)
+    this.currentStreamingSubscription = this.chatService.sendMessage(request)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (sseMessage) => {
@@ -222,15 +230,40 @@ export class ChatComponent implements OnInit, OnDestroy {
         complete: () => {
           botMessage.isTyping = false;
           this.isLoading = false;
+          this.currentStreamingSubscription = null;
           this.changeDetectorRef.detectChanges(); // Force UI update
         },
         error: (error) => {
           console.error('Error receiving message:', error);
-          botMessage.content = 'Sorry, something went wrong. Please try again.';
+          if (error.name === 'AbortError') {
+            botMessage.content = botMessage.content || 'Response cancelled.';
+          } else {
+            botMessage.content = 'Sorry, something went wrong. Please try again.';
+          }
           botMessage.isTyping = false;
           this.isLoading = false;
+          this.currentStreamingSubscription = null;
           this.changeDetectorRef.detectChanges(); // Force UI update
         }
       });
+  }
+
+  cancelMessage() {
+    if (this.currentStreamingSubscription) {
+      this.currentStreamingSubscription.unsubscribe();
+      this.currentStreamingSubscription = null;
+      this.isLoading = false;
+      
+      // Update the last message to show it was cancelled
+      if (this.messages.length > 0) {
+        const lastMessage = this.messages[this.messages.length - 1];
+        if (!lastMessage.isUser && lastMessage.isTyping) {
+          lastMessage.content = lastMessage.content || 'Response cancelled.';
+          lastMessage.isTyping = false;
+        }
+      }
+      
+      this.changeDetectorRef.detectChanges();
+    }
   }
 }
