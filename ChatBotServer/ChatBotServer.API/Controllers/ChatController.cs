@@ -1,3 +1,4 @@
+using ChatBotServer.Application.Features.Chat.Commands;
 using ChatBotServer.Application.Features.Chat.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -68,4 +69,41 @@ public class ChatController : ControllerBase
 
         return new EmptyResult();
     }
+
+    [HttpGet("conversations/{id}")]
+    public async Task<IActionResult> GetConversationHistory(int id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var query = new GetConversationHistoryQuery { ConversationId = id };
+            var result = await _mediator.Send(query, cancellationToken);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(ex.Message);
+        }
+    }
+
+    [HttpPut("messages/{id}/rating")]
+    public async Task<IActionResult> UpdateMessageRating(int id, [FromBody] UpdateMessageRatingRequest request, CancellationToken cancellationToken = default)
+    {
+        var command = new UpdateMessageRatingCommand 
+        { 
+            MessageId = id, 
+            Rating = request.Rating 
+        };
+        
+        var success = await _mediator.Send(command, cancellationToken);
+        
+        if (!success)
+            return NotFound("Message not found");
+            
+        return Ok();
+    }
+}
+
+public class UpdateMessageRatingRequest
+{
+    public int? Rating { get; set; } // 1 for thumbs up, -1 for thumbs down, null for no rating
 }

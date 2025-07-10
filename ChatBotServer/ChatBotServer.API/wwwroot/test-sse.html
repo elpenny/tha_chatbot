@@ -77,7 +77,7 @@
                 },
                 body: JSON.stringify({
                     content: userMessage,
-                    conversationId: 1
+                    conversationId: null
                 })
             }).then(response => {
                 const reader = response.body.getReader();

@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ChatBotServer.Domain\ChatBotServer.Domain.csproj" />
+    <ProjectReference Include="..\ChatBotServer.Infrastructure\ChatBotServer.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

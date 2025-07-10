@@ -22,6 +22,8 @@ namespace ChatBotServer.Infrastructure
 
             // Register repositories
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            services.AddScoped<IChatConversationRepository, ChatConversationRepository>();
+            services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
 
             // Register ChatBot services
             services.Configure<ChatBotServiceOptions>(options => configuration.GetSection("ChatBotService").Bind(options));

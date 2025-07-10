@@ -1,4 +1,4 @@
-﻿namespace ChatBotServer.API.Controllers;
+namespace ChatBotServer.Application.Features.Chat.Queries;
 
 public class ChatMessageRequest
 {
