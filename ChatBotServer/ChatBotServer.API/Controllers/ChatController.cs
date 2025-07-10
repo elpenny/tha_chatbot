@@ -1,6 +1,7 @@
 using ChatBotServer.Application.Features.Chat.Commands;
 using ChatBotServer.Application.Features.Chat.Queries;
 using ChatBotServer.Application.Features.Chat.Requests;
+using ChatBotServer.Application.Features.Chat.Results;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -36,18 +37,20 @@ public class ChatController : ControllerBase
         Response.Headers["Cache-Control"] = "no-cache";
         Response.Headers["Connection"] = "keep-alive";
 
+        var streamingResponse = default(StreamingChatResult);
+        var fullContent = string.Empty;
+        
         try
         {
-            var fullContent = string.Empty;
             
             // Get streaming response through MediatR
-            var streamingQuery = new GetChatResponseStreamingQuery
+            var streamingQuery = new GetChatResponseStreamingCommand
             {
                 Content = request.Content,
                 ConversationId = request.ConversationId
             };
             
-            var streamingResponse = await _mediator.Send(streamingQuery, cancellationToken);
+            streamingResponse = await _mediator.Send(streamingQuery, cancellationToken);
             
             // Stream from MediatR handler
             await foreach (var chunk in streamingResponse.ContentStream)
@@ -78,9 +81,24 @@ public class ChatController : ControllerBase
         }
         catch (OperationCanceledException)
         {
-            // Handle cancellation gracefully
-            var cancelData = new { content = "", isComplete = false, cancelled = true };
-            await Response.WriteAsync($"data: {System.Text.Json.JsonSerializer.Serialize(cancelData)}\n\n", cancellationToken);
+            // Handle cancellation gracefully - the handler will still save partial content
+            // Send final state with current content
+            var cancelData = new { 
+                content = fullContent, 
+                conversationId = streamingResponse?.ConversationId ?? 0,
+                isComplete = false, 
+                cancelled = true 
+            };
+            
+            try
+            {
+                await Response.WriteAsync($"data: {System.Text.Json.JsonSerializer.Serialize(cancelData)}\n\n");
+                await Response.Body.FlushAsync();
+            }
+            catch (OperationCanceledException)
+            {
+                // Response stream was already closed, which is fine
+            }
         }
 
         return new EmptyResult();

@@ -1,4 +1,5 @@
-﻿using ChatBotServer.Application.Features.Chat.Queries;
+﻿using ChatBotServer.Application.Features.Chat.Commands;
+using ChatBotServer.Application.Features.Chat.Queries;
 using ChatBotServer.Application.Features.Chat.Results;
 using ChatBotServer.Domain.Entities;
 using ChatBotServer.Domain.Interfaces;
@@ -7,7 +8,7 @@ using MediatR;
 
 namespace ChatBotServer.Application.Features.Chat.Handlers;
 
-public class GetChatResponseStreamingHandler : IRequestHandler<GetChatResponseStreamingQuery, StreamingChatResult>
+public class GetChatResponseStreamingHandler : IRequestHandler<GetChatResponseStreamingCommand, StreamingChatResult>
 {
     private readonly IChatBotService _chatBotService;
     private readonly IChatConversationRepository _conversationRepository;
@@ -23,7 +24,7 @@ public class GetChatResponseStreamingHandler : IRequestHandler<GetChatResponseSt
         _messageRepository = messageRepository;
     }
 
-    public async Task<StreamingChatResult> Handle(GetChatResponseStreamingQuery request, CancellationToken cancellationToken)
+    public async Task<StreamingChatResult> Handle(GetChatResponseStreamingCommand request, CancellationToken cancellationToken)
     {
         // Get or create conversation
         ChatConversation conversation;
@@ -73,33 +74,61 @@ public class GetChatResponseStreamingHandler : IRequestHandler<GetChatResponseSt
         int conversationId, 
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var responseContent = string.Empty;
-        
-        // Stream from AI service
-        await foreach (var chunk in _chatBotService.GenerateStreamingResponseAsync(userMessage, cancellationToken))
+        // Use a wrapper to handle the saving logic
+        await foreach (var chunk in StreamWithPersistence(userMessage, conversationId, cancellationToken))
         {
-            responseContent += chunk;
             yield return chunk;
         }
+    }
 
-        // Save bot response after streaming completes
-        var botMessage = new ChatMessage
+    private async IAsyncEnumerable<string> StreamWithPersistence(
+        string userMessage, 
+        int conversationId, 
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var responseContent = string.Empty;
+        var wasCompleted = false;
+        
+        IAsyncEnumerable<string> streamSource = _chatBotService.GenerateStreamingResponseAsync(userMessage, cancellationToken);
+        
+        try
         {
-            Content = responseContent,
-            Role = MessageRole.Assistant,
-            ConversationId = conversationId,
-            CreatedAt = DateTime.UtcNow
-        };
-        await _messageRepository.AddAsync(botMessage);
-        await _messageRepository.SaveChangesAsync();
+            await foreach (var chunk in streamSource.WithCancellation(cancellationToken))
+            {
+                responseContent += chunk;
+                yield return chunk;
+            }
+            wasCompleted = true;
+        }
+        finally
+        {
+            // Always save the response content (even if partial due to cancellation)
+            await SaveBotResponse(responseContent, conversationId, wasCompleted);
+        }
+    }
 
-        // Update conversation timestamp again
-        var conversation = await _conversationRepository.GetByIdAsync(conversationId);
-        if (conversation != null)
+    private async Task SaveBotResponse(string content, int conversationId, bool wasCompleted)
+    {
+        if (!string.IsNullOrEmpty(content))
         {
-            conversation.UpdatedAt = DateTime.UtcNow;
-            await _conversationRepository.UpdateAsync(conversation);
-            await _conversationRepository.SaveChangesAsync();
+            var botMessage = new ChatMessage
+            {
+                Content = content + (wasCompleted ? "" : " [Response cancelled]"),
+                Role = MessageRole.Assistant,
+                ConversationId = conversationId,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _messageRepository.AddAsync(botMessage);
+            await _messageRepository.SaveChangesAsync();
+
+            // Update conversation timestamp
+            var conversation = await _conversationRepository.GetByIdAsync(conversationId);
+            if (conversation != null)
+            {
+                conversation.UpdatedAt = DateTime.UtcNow;
+                await _conversationRepository.UpdateAsync(conversation);
+                await _conversationRepository.SaveChangesAsync();
+            }
         }
     }
 }
