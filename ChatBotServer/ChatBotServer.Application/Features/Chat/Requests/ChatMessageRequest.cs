@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace ChatBotServer.Application.Features.Chat.Queries;
+namespace ChatBotServer.Application.Features.Chat.Requests;
 
 /// <summary>
 /// Request model for sending a chat message
