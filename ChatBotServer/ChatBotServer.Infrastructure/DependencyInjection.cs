@@ -26,7 +26,7 @@ namespace ChatBotServer.Infrastructure
             services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
 
             // Register ChatBot services
-            services.Configure<ChatBotServiceOptions>(configuration.GetSection("ChatBotService"));
+            services.Configure<ChatBotServiceOptions>(options => configuration.GetSection("ChatBotService").Bind(options));
             
             var chatBotOptions = configuration.GetSection("ChatBotService").Get<ChatBotServiceOptions>();
             if (chatBotOptions?.UseAzureAI == true)

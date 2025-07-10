@@ -1,14 +1,15 @@
-using Azure;
-using Azure.AI.Inference;
+using System.ClientModel;
+using Azure.AI.OpenAI;
 using ChatBotServer.Domain.Configuration;
 using ChatBotServer.Domain.Interfaces;
 using Microsoft.Extensions.Options;
+using OpenAI.Chat;
 
 namespace ChatBotServer.Infrastructure.Services;
 
 public class AzureAIChatBotService : IChatBotService
 {
-    private readonly ChatCompletionsClient _client;
+    private readonly ChatClient _chatClient;
     private readonly ChatBotServiceOptions _options;
 
     public AzureAIChatBotService(IOptions<ChatBotServiceOptions> options)
@@ -21,50 +22,44 @@ public class AzureAIChatBotService : IChatBotService
         }
 
         var endpoint = new Uri(_options.AzureAIEndpoint);
-        var credential = new AzureKeyCredential(_options.AzureAIKey);
-        _client = new ChatCompletionsClient(endpoint, credential);
+        var credential = new ApiKeyCredential(_options.AzureAIKey);
+        var azureClient = new AzureOpenAIClient(endpoint, credential);
+        _chatClient = azureClient.GetChatClient(_options.ModelName);
     }
 
     public async Task<string> GenerateResponseAsync(string userMessage, CancellationToken cancellationToken = default)
     {
-        var requestOptions = new ChatCompletionsOptions
+        var messages = new List<ChatMessage>
         {
-            Messages = 
-            {
-                new ChatRequestSystemMessage("You are a helpful assistant."),
-                new ChatRequestUserMessage(userMessage)
-            },
-            Model = _options.ModelName,
+            new SystemChatMessage("You are a helpful assistant."),
+            new UserChatMessage(userMessage)
         };
 
-        var response = await _client.CompleteAsync(requestOptions, cancellationToken);
-        return response.Value.Content ?? string.Empty;
+        var completion = await _chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
+        return completion.Value.Content[0].Text ?? string.Empty;
     }
 
     public async IAsyncEnumerable<string> GenerateStreamingResponseAsync(string userMessage, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var requestOptions = new ChatCompletionsOptions
+        var messages = new List<ChatMessage>
         {
-            Messages = 
-            {
-                new ChatRequestSystemMessage("You are a helpful assistant."),
-                new ChatRequestUserMessage(userMessage)
-            },
-            Model = _options.ModelName,
+            new SystemChatMessage("You are a helpful assistant."),
+            new UserChatMessage(userMessage)
         };
 
-        var response = await _client.CompleteStreamingAsync(requestOptions, cancellationToken);
-        var currentContent = string.Empty;
+        var completionUpdates = _chatClient.CompleteChatStreamingAsync(messages, cancellationToken: cancellationToken);
 
-        await foreach (var chatUpdate in response.EnumerateValues())
+        await foreach (var completionUpdate in completionUpdates)
         {
             if (cancellationToken.IsCancellationRequested)
                 yield break;
 
-            if (!string.IsNullOrEmpty(chatUpdate.ContentUpdate))
+            foreach (var contentPart in completionUpdate.ContentUpdate)
             {
-                currentContent += chatUpdate.ContentUpdate;
-                yield return currentContent;
+                if (!string.IsNullOrEmpty(contentPart.Text))
+                {
+                    yield return contentPart.Text;
+                }
             }
         }
     }

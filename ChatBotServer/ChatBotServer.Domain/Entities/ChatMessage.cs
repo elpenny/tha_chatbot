@@ -1,12 +1,5 @@
 namespace ChatBotServer.Domain.Entities;
 
-public enum MessageRole
-{
-    User,
-    Assistant,
-    System
-}
-
 public class ChatMessage
 {
     public int Id { get; set; }

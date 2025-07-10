@@ -35,7 +35,7 @@ public class FakeChatBotService : IChatBotService
             if (cancellationToken.IsCancellationRequested)
                 yield break;
 
-            yield return response.Substring(0, i + 1);
+            yield return response[i].ToString();
             
             // Simulate typing delay
             await Task.Delay(50, cancellationToken);
