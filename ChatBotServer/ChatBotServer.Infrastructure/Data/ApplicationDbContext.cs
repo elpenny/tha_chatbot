@@ -1,4 +1,4 @@
-﻿using ChatBotServer.Infrastructure.Data.Models;
+﻿using ChatBotServer.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChatBotServer.Infrastructure.Data

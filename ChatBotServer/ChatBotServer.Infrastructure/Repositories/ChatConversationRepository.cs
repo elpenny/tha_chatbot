@@ -1,5 +1,5 @@
-﻿using ChatBotServer.Infrastructure.Data;
-using ChatBotServer.Infrastructure.Data.Models;
+﻿using ChatBotServer.Domain.Entities;
+using ChatBotServer.Infrastructure.Data;
 using ChatBotServer.Infrastructure.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
