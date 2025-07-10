@@ -35,7 +35,6 @@ public class ChatController : ControllerBase
         Response.Headers["Content-Type"] = "text/event-stream";
         Response.Headers["Cache-Control"] = "no-cache";
         Response.Headers["Connection"] = "keep-alive";
-        Response.Headers["Access-Control-Allow-Origin"] = "*";
 
         try
         {
@@ -51,7 +50,7 @@ public class ChatController : ControllerBase
             var streamingResponse = await _mediator.Send(streamingQuery, cancellationToken);
             
             // Stream from MediatR handler
-            await foreach (var chunk in streamingResponse)
+            await foreach (var chunk in streamingResponse.ContentStream)
             {
                 if (cancellationToken.IsCancellationRequested)
                     break;
@@ -60,6 +59,7 @@ public class ChatController : ControllerBase
                 var sseData = new
                 {
                     content = fullContent,
+                    conversationId = streamingResponse.ConversationId,
                     isComplete = false
                 };
 
@@ -68,7 +68,11 @@ public class ChatController : ControllerBase
             }
 
             // Send final completion event
-            var finalData = new { content = fullContent, isComplete = true };
+            var finalData = new { 
+                content = fullContent, 
+                conversationId = streamingResponse.ConversationId, 
+                isComplete = true 
+            };
             await Response.WriteAsync($"data: {System.Text.Json.JsonSerializer.Serialize(finalData)}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
         }

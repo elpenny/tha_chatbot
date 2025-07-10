@@ -1,4 +1,5 @@
 ﻿using ChatBotServer.Application.Features.Chat.Queries;
+using ChatBotServer.Application.Features.Chat.Results;
 using ChatBotServer.Domain.Entities;
 using ChatBotServer.Domain.Interfaces;
 using ChatBotServer.Infrastructure.Repositories.Interfaces;
@@ -6,7 +7,7 @@ using MediatR;
 
 namespace ChatBotServer.Application.Features.Chat.Handlers;
 
-public class GetChatResponseStreamingHandler : IRequestHandler<GetChatResponseStreamingQuery, IAsyncEnumerable<string>>
+public class GetChatResponseStreamingHandler : IRequestHandler<GetChatResponseStreamingQuery, StreamingChatResult>
 {
     private readonly IChatBotService _chatBotService;
     private readonly IChatConversationRepository _conversationRepository;
@@ -22,7 +23,7 @@ public class GetChatResponseStreamingHandler : IRequestHandler<GetChatResponseSt
         _messageRepository = messageRepository;
     }
 
-    public async Task<IAsyncEnumerable<string>> Handle(GetChatResponseStreamingQuery request, CancellationToken cancellationToken)
+    public async Task<StreamingChatResult> Handle(GetChatResponseStreamingQuery request, CancellationToken cancellationToken)
     {
         // Get or create conversation
         ChatConversation conversation;
@@ -60,7 +61,11 @@ public class GetChatResponseStreamingHandler : IRequestHandler<GetChatResponseSt
         await _conversationRepository.SaveChangesAsync();
 
         // Create a wrapper that collects the response and saves it
-        return CreatePersistentStreamingResponse(request.Content, conversation.Id, cancellationToken);
+        return new StreamingChatResult
+        {
+            ConversationId = conversation.Id,
+            ContentStream = CreatePersistentStreamingResponse(request.Content, conversation.Id, cancellationToken)
+        };
     }
 
     private async IAsyncEnumerable<string> CreatePersistentStreamingResponse(
