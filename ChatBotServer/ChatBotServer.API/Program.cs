@@ -6,7 +6,31 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "ChatBot API",
+        Version = "v1",
+        Description = "API for AI ChatBot with streaming support, conversation management, and message rating",
+        Contact = new Microsoft.OpenApi.Models.OpenApiContact
+        {
+            Name = "ChatBot API",
+            Email = "support@chatbot.com"
+        }
+    });
+    
+    // Include XML comments
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, xmlFile);
+    if (System.IO.File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
+    
+    // Ensure all controllers are documented
+    c.DocInclusionPredicate((name, api) => true);
+});
 
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ChatBotServer.Application.DependencyInjection).Assembly));
 builder.Services.AddInfrastructure(builder.Configuration);

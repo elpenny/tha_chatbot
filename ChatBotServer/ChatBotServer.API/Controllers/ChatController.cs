@@ -2,6 +2,7 @@ using ChatBotServer.Application.Features.Chat.Commands;
 using ChatBotServer.Application.Features.Chat.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace ChatBotServer.API.Controllers;
 
@@ -16,7 +17,18 @@ public class ChatController : ControllerBase
         _mediator = mediator;
     }
 
+    /// <summary>
+    /// Send a message to the chatbot and receive a streaming response
+    /// </summary>
+    /// <param name="request">The chat message request containing content and optional conversation ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Server-Sent Events stream with bot response</returns>
+    /// <response code="200">Successful streaming response</response>
+    /// <response code="400">Invalid request parameters</response>
     [HttpPost("message")]
+    [Produces("text/event-stream")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetNextMessage([FromBody] ChatMessageRequest request, CancellationToken cancellationToken = default)
     {
         // Set up Server-Sent Events headers
@@ -70,7 +82,17 @@ public class ChatController : ControllerBase
         return new EmptyResult();
     }
 
+    /// <summary>
+    /// Retrieve conversation history with all messages
+    /// </summary>
+    /// <param name="id">The conversation ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Conversation with messages and ratings</returns>
+    /// <response code="200">Conversation found and returned</response>
+    /// <response code="404">Conversation not found</response>
     [HttpGet("conversations/{id}")]
+    [ProducesResponseType(typeof(GetConversationHistoryResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetConversationHistory(int id, CancellationToken cancellationToken = default)
     {
         try
@@ -85,7 +107,20 @@ public class ChatController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Update the rating for a specific message
+    /// </summary>
+    /// <param name="id">The message ID</param>
+    /// <param name="request">Rating request (1 for thumbs up, -1 for thumbs down, null to remove rating)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Success or error status</returns>
+    /// <response code="200">Rating updated successfully</response>
+    /// <response code="404">Message not found</response>
+    /// <response code="400">Invalid rating value</response>
     [HttpPut("messages/{id}/rating")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateMessageRating(int id, [FromBody] UpdateMessageRatingRequest request, CancellationToken cancellationToken = default)
     {
         var command = new UpdateMessageRatingCommand 
@@ -103,7 +138,14 @@ public class ChatController : ControllerBase
     }
 }
 
+/// <summary>
+/// Request model for updating message rating
+/// </summary>
 public class UpdateMessageRatingRequest
 {
-    public int? Rating { get; set; } // 1 for thumbs up, -1 for thumbs down, null for no rating
+    /// <summary>
+    /// Rating value: 1 for thumbs up, -1 for thumbs down, null to remove rating
+    /// </summary>
+    [Range(-1, 1, ErrorMessage = "Rating must be -1, 0, or 1")]
+    public int? Rating { get; set; }
 }
