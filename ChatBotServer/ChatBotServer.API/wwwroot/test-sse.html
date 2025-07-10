@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chatbot SSE Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .chat-container { max-width: 600px; margin: 0 auto; }
+        .message { padding: 10px; margin: 10px 0; border-radius: 10px; }
+        .user { background-color: #e3f2fd; text-align: right; }
+        .bot { background-color: #f5f5f5; }
+        .input-area { margin-top: 20px; }
+        input[type="text"] { width: 70%; padding: 10px; }
+        button { padding: 10px 20px; margin-left: 10px; }
+        .typing { color: #666; font-style: italic; }
+        #status { margin-top: 10px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <h1>Chatbot SSE Test</h1>
+        <div id="messages"></div>
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Type your message..." />
+            <button onclick="sendMessage()">Send</button>
+            <button onclick="cancelResponse()" id="cancelBtn" disabled>Cancel</button>
+        </div>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        let eventSource = null;
+        let currentBotMessage = null;
+
+        function addMessage(content, isUser = false) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            messageDiv.textContent = content;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            return messageDiv;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, true);
+            input.value = '';
+
+            // Start SSE connection
+            startSSEConnection(message);
+        }
+
+        function startSSEConnection(userMessage) {
+            const cancelBtn = document.getElementById('cancelBtn');
+            const status = document.getElementById('status');
+            
+            // Create bot message placeholder
+            currentBotMessage = addMessage('', false);
+            currentBotMessage.classList.add('typing');
+            
+            status.textContent = 'Connecting...';
+            cancelBtn.disabled = false;
+
+            // Create EventSource with POST data (using a workaround)
+            const url = '/api/chat/message';
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'text/event-stream',
+                },
+                body: JSON.stringify({
+                    content: userMessage,
+                    conversationId: 1
+                })
+            }).then(response => {
+                const reader = response.body.getReader();
+                
+                function readStream() {
+                    return reader.read().then(({ done, value }) => {
+                        if (done) {
+                            status.textContent = 'Complete';
+                            cancelBtn.disabled = true;
+                            currentBotMessage.classList.remove('typing');
+                            return;
+                        }
+
+                        const chunk = new TextDecoder().decode(value);
+                        const lines = chunk.split('\n');
+                        
+                        lines.forEach(line => {
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const data = JSON.parse(line.substring(6));
+                                    currentBotMessage.textContent = data.content;
+                                    
+                                    if (data.isComplete) {
+                                        currentBotMessage.classList.remove('typing');
+                                        cancelBtn.disabled = true;
+                                        status.textContent = 'Complete';
+                                    } else {
+                                        status.textContent = 'Streaming...';
+                                    }
+                                } catch (e) {
+                                    console.error('Error parsing SSE data:', e);
+                                }
+                            }
+                        });
+
+                        return readStream();
+                    });
+                }
+
+                return readStream();
+            }).catch(error => {
+                console.error('Error:', error);
+                status.textContent = 'Error occurred';
+                cancelBtn.disabled = true;
+            });
+        }
+
+        function cancelResponse() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+            document.getElementById('cancelBtn').disabled = true;
+            document.getElementById('status').textContent = 'Cancelled';
+            if (currentBotMessage) {
+                currentBotMessage.classList.remove('typing');
+            }
+        }
+
+        // Allow Enter key to send message
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
