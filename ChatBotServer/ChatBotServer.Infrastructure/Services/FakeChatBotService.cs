@@ -1,3 +1,4 @@
+using ChatBotServer.Domain.Entities;
 using ChatBotServer.Domain.Interfaces;
 using NLipsum.Core;
 
@@ -8,7 +9,7 @@ public class FakeChatBotService : IChatBotService
     private readonly LipsumGenerator _lipsumGenerator = new();
     private readonly Random _random = new();
 
-    public async IAsyncEnumerable<string> GenerateStreamingResponseAsync(string userMessage, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<string> GenerateStreamingResponseAsync(string userMessage, IEnumerable<ChatMessage> conversationHistory, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var response = await GenerateResponseAsync(userMessage, cancellationToken);
         

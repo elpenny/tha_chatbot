@@ -79,7 +79,11 @@ public class GetChatResponseStreamingHandler(
         var responseContent = string.Empty;
         var wasCompleted = false;
         
-        IAsyncEnumerable<string> streamSource = chatBotService.GenerateStreamingResponseAsync(userMessage, cancellationToken);
+        // Get conversation history for multi-turn context
+        var conversation = await conversationRepository.GetConversationWithMessagesAsync(conversationId);
+        var conversationHistory = conversation?.Messages?.OrderBy(m => m.CreatedAt).ToList() ?? new List<ChatMessage>();
+        
+        IAsyncEnumerable<string> streamSource = chatBotService.GenerateStreamingResponseAsync(userMessage, conversationHistory, cancellationToken);
         
         try
         {
