@@ -171,7 +171,6 @@ export class ChatComponent implements OnInit, OnDestroy {
           this.scrollToBottom();
         },
         error: (error) => {
-          console.error('Error loading conversation:', error);
           this.isLoading = false;
           this.changeDetectorRef.detectChanges();
         }

@@ -15,10 +15,6 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# List contents to debug
-RUN ls -la /app/dist/
-RUN ls -la /app/dist/chatbot_frontend/
-
 # Production stage
 FROM nginx:alpine
 
@@ -28,10 +24,6 @@ COPY --from=build /app/dist/chatbot_frontend/browser/ /usr/share/nginx/html/
 # Remove default nginx config and replace with our custom one
 RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# List contents to debug
-RUN ls -la /usr/share/nginx/html/
-RUN ls -la /etc/nginx/conf.d/
 
 # Expose port 80
 EXPOSE 80

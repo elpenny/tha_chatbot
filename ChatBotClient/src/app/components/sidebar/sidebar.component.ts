@@ -57,7 +57,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
           this.changeDetectorRef.detectChanges();
         },
         error: (error) => {
-          console.error('Error loading conversations:', error);
           this.isLoading = false;
           this.changeDetectorRef.detectChanges();
         }

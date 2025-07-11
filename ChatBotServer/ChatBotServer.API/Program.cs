@@ -54,18 +54,14 @@ var app = builder.Build();
 // Auto-migrate database on startup
 try
 {
-    using (var scope = app.Services.CreateScope())
-    {
-        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        Console.WriteLine("Attempting to connect to database...");
-        dbContext.Database.Migrate();
-        Console.WriteLine("Database migration completed successfully.");
-    }
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.Migrate();
 }
 catch (Exception ex)
 {
     Console.WriteLine($"Database migration failed: {ex.Message}");
-    Console.WriteLine("Application will continue but may not function properly.");
+    throw;
 }
 
 // Configure the HTTP request pipeline.
@@ -92,15 +88,5 @@ app.MapGet("/health", () => new {
     environment = app.Environment.EnvironmentName
 });
 
-// Add root endpoint
-app.MapGet("/", () => "ChatBot API is running. Visit /swagger for API documentation.");
-
-Console.WriteLine("Starting ChatBot API server...");
-Console.WriteLine($"Environment: {app.Environment.EnvironmentName}");
-Console.WriteLine("Available endpoints:");
-Console.WriteLine("- Root: http://localhost:8080/");
-Console.WriteLine("- Health: http://localhost:8080/health");
-Console.WriteLine("- Swagger: http://localhost:8080/swagger");
-Console.WriteLine("- API: http://localhost:8080/api/chat/conversations");
 
 app.Run();
