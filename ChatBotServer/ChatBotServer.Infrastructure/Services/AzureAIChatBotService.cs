@@ -10,33 +10,20 @@ namespace ChatBotServer.Infrastructure.Services;
 public class AzureAIChatBotService : IChatBotService
 {
     private readonly ChatClient _chatClient;
-    private readonly ChatBotServiceOptions _options;
 
     public AzureAIChatBotService(IOptions<ChatBotServiceOptions> options)
     {
-        _options = options.Value;
+        var configuration = options.Value;
         
-        if (string.IsNullOrEmpty(_options.AzureAIEndpoint) || string.IsNullOrEmpty(_options.AzureAIKey) || string.IsNullOrEmpty(_options.ModelName))
+        if (string.IsNullOrEmpty(configuration.AzureAIEndpoint) || string.IsNullOrEmpty(configuration.AzureAIKey) || string.IsNullOrEmpty(configuration.ModelName))
         {
             throw new InvalidOperationException("Azure AI endpoint, key and model must be configured");
         }
 
-        var endpoint = new Uri(_options.AzureAIEndpoint);
-        var credential = new ApiKeyCredential(_options.AzureAIKey);
+        var endpoint = new Uri(configuration.AzureAIEndpoint);
+        var credential = new ApiKeyCredential(configuration.AzureAIKey);
         var azureClient = new AzureOpenAIClient(endpoint, credential);
-        _chatClient = azureClient.GetChatClient(_options.ModelName);
-    }
-
-    public async Task<string> GenerateResponseAsync(string userMessage, CancellationToken cancellationToken = default)
-    {
-        var messages = new List<ChatMessage>
-        {
-            new SystemChatMessage("You are a helpful assistant."),
-            new UserChatMessage(userMessage)
-        };
-
-        var completion = await _chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
-        return completion.Value.Content[0].Text ?? string.Empty;
+        _chatClient = azureClient.GetChatClient(configuration.ModelName);
     }
 
     public async IAsyncEnumerable<string> GenerateStreamingResponseAsync(string userMessage, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
