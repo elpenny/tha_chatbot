@@ -1,7 +1,40 @@
 ﻿services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: "YourStrong!Passw0rd"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Express"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+
   chatbot_backend.api:
-    image: chatbot_backend.api
+    image: chatbotserver
     build:
       context: .
-      dockerfile: chatbot_backend/Dockerfile
+      dockerfile: ChatBotServer/Dockerfile
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=ChatBotDB;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=true;
+    ports:
+      - "8080:8080"
+    depends_on:
+      - sqlserver
+    profiles:
+      - fullApp
+
+  chatbot_frontend:
+    build:
+      context: ./ChatBotClient
+      dockerfile: Dockerfile
+    ports:
+      - "4200:80"
+    depends_on:
+      - chatbot_backend.api
+    profiles:
+      - fullApp
+
+volumes:
+  sqlserver_data:
 

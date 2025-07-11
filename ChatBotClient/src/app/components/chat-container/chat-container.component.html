@@ -1,0 +1,14 @@
+<div class="chat-container">
+  <app-sidebar 
+    [selectedConversationId]="selectedConversationId"
+    (conversationSelected)="onConversationSelected($event)"
+    (newConversation)="onNewConversation()">
+  </app-sidebar>
+  
+  <div class="chat-main">
+    <app-chat
+      (conversationCreated)="onConversationCreated($event)"
+      (conversationUpdated)="onConversationUpdated($event)">
+    </app-chat>
+  </div>
+</div>

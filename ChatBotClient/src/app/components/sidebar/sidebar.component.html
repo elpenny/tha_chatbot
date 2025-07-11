@@ -1,0 +1,46 @@
+<div class="sidebar-container">
+  <div class="sidebar-header">
+    <h3>Conversations</h3>
+    <button mat-icon-button 
+            (click)="onNewConversation()"
+            matTooltip="New Conversation"
+            class="new-conversation-btn">
+      <mat-icon>add</mat-icon>
+    </button>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <div class="conversations-list" *ngIf="!isLoading">
+    <mat-list>
+      <mat-list-item 
+        *ngFor="let conversation of conversations"
+        (click)="conversation.id && onSelectConversation(conversation.id)"
+        [class.selected]="selectedConversationId === conversation.id"
+        class="conversation-item">
+        
+        <div class="conversation-content">
+          <div class="conversation-title">
+            {{ getConversationTitle(conversation) }}
+          </div>
+          <div class="conversation-preview">
+            {{ getConversationPreview(conversation) }}
+          </div>
+          <div class="conversation-date">
+            {{ formatDate(conversation.createdAt) }}
+          </div>
+        </div>
+      </mat-list-item>
+    </mat-list>
+  </div>
+
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-icon class="loading-icon">hourglass_empty</mat-icon>
+    <span>Loading conversations...</span>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading && conversations.length === 0">
+    <mat-icon class="empty-icon">chat_bubble_outline</mat-icon>
+    <p>No conversations yet</p>
+  </div>
+</div>

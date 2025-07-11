@@ -1,0 +1,16 @@
+.input-container {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+.message-input {
+  flex: 1;
+}
+
+// Ensure button stays aligned with the input field
+button[mat-fab] {
+  margin-bottom: 8px;
+}
