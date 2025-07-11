@@ -95,6 +95,11 @@ export class ChatComponent implements OnInit, OnDestroy {
         }
       }
       
+      // Refresh conversation to get the cancelled message with real messageId
+      if (this.conversationId) {
+        this.loadConversationMessages(this.conversationId);
+      }
+      
       this.changeDetectorRef.detectChanges();
     }
   }
