@@ -5,22 +5,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ChatBotServer.Infrastructure.Repositories;
 
-public class ChatConversationRepository : Repository<ChatConversation>, IChatConversationRepository
+public class ChatConversationRepository(ApplicationDbContext context)
+    : Repository<ChatConversation>(context), IChatConversationRepository
 {
-    public ChatConversationRepository(ApplicationDbContext context) : base(context)
-    {
-    }
-
     public async Task<ChatConversation?> GetConversationWithMessagesAsync(int conversationId)
     {
-        return await _dbSet
+        return await DbSet
             .Include(c => c.Messages.OrderBy(m => m.CreatedAt))
             .FirstOrDefaultAsync(c => c.Id == conversationId);
     }
 
     public async Task<IEnumerable<ChatConversation>> GetRecentConversationsAsync(int limit = 10)
     {
-        return await _dbSet
+        return await DbSet
             .OrderByDescending(c => c.UpdatedAt ?? c.CreatedAt)
             .Take(limit)
             .ToListAsync();

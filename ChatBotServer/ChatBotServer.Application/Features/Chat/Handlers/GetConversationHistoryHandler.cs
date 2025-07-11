@@ -4,18 +4,12 @@ using MediatR;
 
 namespace ChatBotServer.Application.Features.Chat.Handlers;
 
-public class GetConversationHistoryHandler : IRequestHandler<GetConversationHistoryQuery, GetConversationHistoryResult>
+public class GetConversationHistoryHandler(IChatConversationRepository conversationRepository)
+    : IRequestHandler<GetConversationHistoryQuery, GetConversationHistoryResult>
 {
-    private readonly IChatConversationRepository _conversationRepository;
-
-    public GetConversationHistoryHandler(IChatConversationRepository conversationRepository)
-    {
-        _conversationRepository = conversationRepository;
-    }
-
     public async Task<GetConversationHistoryResult> Handle(GetConversationHistoryQuery request, CancellationToken cancellationToken)
     {
-        var conversation = await _conversationRepository.GetConversationWithMessagesAsync(request.ConversationId);
+        var conversation = await conversationRepository.GetConversationWithMessagesAsync(request.ConversationId);
         
         if (conversation == null)
             throw new InvalidOperationException($"Conversation with ID {request.ConversationId} not found");

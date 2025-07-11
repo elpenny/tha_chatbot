@@ -9,15 +9,8 @@ namespace ChatBotServer.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ChatController : ControllerBase
+public class ChatController(IMediator mediator) : ControllerBase
 {
-    private readonly IMediator _mediator;
-
-    public ChatController(IMediator mediator)
-    {
-        _mediator = mediator;
-    }
-
     /// <summary>
     /// Send a message to the chatbot and receive a streaming response
     /// </summary>
@@ -50,7 +43,7 @@ public class ChatController : ControllerBase
                 ConversationId = request.ConversationId
             };
             
-            streamingResponse = await _mediator.Send(streamingQuery, cancellationToken);
+            streamingResponse = await mediator.Send(streamingQuery, cancellationToken);
             
             // Stream from MediatR handler
             await foreach (var chunk in streamingResponse.ContentStream)
@@ -120,7 +113,7 @@ public class ChatController : ControllerBase
         try
         {
             var query = new GetConversationHistoryQuery { ConversationId = id };
-            var result = await _mediator.Send(query, cancellationToken);
+            var result = await mediator.Send(query, cancellationToken);
             return Ok(result);
         }
         catch (InvalidOperationException ex)
@@ -151,7 +144,7 @@ public class ChatController : ControllerBase
             Rating = request.Rating 
         };
         
-        var success = await _mediator.Send(command, cancellationToken);
+        var success = await mediator.Send(command, cancellationToken);
         
         if (!success)
             return NotFound("Message not found");

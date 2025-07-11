@@ -1,0 +1,23 @@
+<div class="chat-container">
+  <mat-card class="chat-card">
+    <mat-card-header>
+      <mat-card-title>{{ constants.MESSAGES.CHAT_TITLE }}</mat-card-title>
+    </mat-card-header>
+    
+    <mat-card-content class="chat-content">
+      <div class="messages-container" #messagesContainer>
+        <app-message 
+          *ngFor="let message of messages; trackBy: trackByMessageId"
+          [message]="message"
+          (rateMessage)="onRateMessage($event)">
+        </app-message>
+      </div>
+      
+      <app-chat-input 
+        [isLoading]="isLoading"
+        (sendMessage)="onSendMessage($event)"
+        (cancelMessage)="onCancelMessage()">
+      </app-chat-input>
+    </mat-card-content>
+  </mat-card>
+</div>

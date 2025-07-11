@@ -1,0 +1,62 @@
+.message {
+  margin-bottom: 16px;
+  display: flex;
+}
+
+.user-message {
+  justify-content: flex-end;
+}
+
+.bot-message {
+  justify-content: flex-start;
+}
+
+.message-content {
+  max-width: 70%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  word-wrap: break-word;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-message .message-content {
+  background-color: #2196f3;
+  color: white;
+}
+
+.bot-message .message-content {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.message-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  justify-content: flex-start;
+}
+
+.rating-button {
+  width: 32px;
+  height: 32px;
+  color: #666;
+  transition: color 0.2s ease;
+}
+
+.rating-button:hover {
+  color: #333;
+}
+
+.rating-button.rated.thumbs-up {
+  color: #4caf50;
+}
+
+.rating-button.rated.thumbs-down {
+  color: #f44336;
+}
+
+.rating-button.rated:hover {
+  color: inherit;
+}

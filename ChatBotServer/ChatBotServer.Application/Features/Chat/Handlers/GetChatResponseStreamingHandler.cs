@@ -8,41 +8,31 @@ using MediatR;
 
 namespace ChatBotServer.Application.Features.Chat.Handlers;
 
-public class GetChatResponseStreamingHandler : IRequestHandler<GetChatResponseStreamingCommand, StreamingChatResult>
+public class GetChatResponseStreamingHandler(
+    IChatBotService chatBotService,
+    IChatConversationRepository conversationRepository,
+    IChatMessageRepository messageRepository)
+    : IRequestHandler<GetChatResponseStreamingCommand, StreamingChatResult>
 {
-    private readonly IChatBotService _chatBotService;
-    private readonly IChatConversationRepository _conversationRepository;
-    private readonly IChatMessageRepository _messageRepository;
-
-    public GetChatResponseStreamingHandler(
-        IChatBotService chatBotService,
-        IChatConversationRepository conversationRepository,
-        IChatMessageRepository messageRepository)
-    {
-        _chatBotService = chatBotService;
-        _conversationRepository = conversationRepository;
-        _messageRepository = messageRepository;
-    }
-
     public async Task<StreamingChatResult> Handle(GetChatResponseStreamingCommand request, CancellationToken cancellationToken)
     {
         // Get or create conversation
         ChatConversation conversation;
         if (request.ConversationId.HasValue)
         {
-            conversation = await _conversationRepository.GetByIdAsync(request.ConversationId.Value)
+            conversation = await conversationRepository.GetByIdAsync(request.ConversationId.Value)
                 ?? throw new InvalidOperationException($"Conversation with ID {request.ConversationId} not found");
         }
         else
         {
-            // Create new conversation
+            // Create a new conversation
             conversation = new ChatConversation
             {
                 Title = request.Content.Length > 50 ? request.Content[..50] + "..." : request.Content,
                 CreatedAt = DateTime.UtcNow
             };
-            await _conversationRepository.AddAsync(conversation);
-            await _conversationRepository.SaveChangesAsync();
+            await conversationRepository.AddAsync(conversation);
+            await conversationRepository.SaveChangesAsync();
         }
 
         // Save user message
@@ -53,13 +43,13 @@ public class GetChatResponseStreamingHandler : IRequestHandler<GetChatResponseSt
             ConversationId = conversation.Id,
             CreatedAt = DateTime.UtcNow
         };
-        await _messageRepository.AddAsync(userMessage);
-        await _messageRepository.SaveChangesAsync();
+        await messageRepository.AddAsync(userMessage);
+        await messageRepository.SaveChangesAsync();
 
         // Update conversation timestamp
         conversation.UpdatedAt = DateTime.UtcNow;
-        await _conversationRepository.UpdateAsync(conversation);
-        await _conversationRepository.SaveChangesAsync();
+        await conversationRepository.UpdateAsync(conversation);
+        await conversationRepository.SaveChangesAsync();
 
         // Create a wrapper that collects the response and saves it
         return new StreamingChatResult
@@ -89,7 +79,7 @@ public class GetChatResponseStreamingHandler : IRequestHandler<GetChatResponseSt
         var responseContent = string.Empty;
         var wasCompleted = false;
         
-        IAsyncEnumerable<string> streamSource = _chatBotService.GenerateStreamingResponseAsync(userMessage, cancellationToken);
+        IAsyncEnumerable<string> streamSource = chatBotService.GenerateStreamingResponseAsync(userMessage, cancellationToken);
         
         try
         {
@@ -118,16 +108,16 @@ public class GetChatResponseStreamingHandler : IRequestHandler<GetChatResponseSt
                 ConversationId = conversationId,
                 CreatedAt = DateTime.UtcNow
             };
-            await _messageRepository.AddAsync(botMessage);
-            await _messageRepository.SaveChangesAsync();
+            await messageRepository.AddAsync(botMessage);
+            await messageRepository.SaveChangesAsync();
 
             // Update conversation timestamp
-            var conversation = await _conversationRepository.GetByIdAsync(conversationId);
+            var conversation = await conversationRepository.GetByIdAsync(conversationId);
             if (conversation != null)
             {
                 conversation.UpdatedAt = DateTime.UtcNow;
-                await _conversationRepository.UpdateAsync(conversation);
-                await _conversationRepository.SaveChangesAsync();
+                await conversationRepository.UpdateAsync(conversation);
+                await conversationRepository.SaveChangesAsync();
             }
         }
     }
