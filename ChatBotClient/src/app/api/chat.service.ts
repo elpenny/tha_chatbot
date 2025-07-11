@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import type { components } from './types';
 import { SSEMessage } from '../models/chat.model';
+import { environment } from '../../environments/environment';
 
 // Type aliases for convenience
 export type ChatMessageRequest = components['schemas']['ChatMessageRequest'];
@@ -15,7 +16,7 @@ export type ConversationSummary = components['schemas']['ConversationSummary'];
   providedIn: 'root'
 })
 export class ChatService {
-  private readonly baseUrl = 'http://localhost:5051/api/chat';
+  private readonly baseUrl = `${environment.apiUrl}/chat`;
 
   constructor(private http: HttpClient) {}
 

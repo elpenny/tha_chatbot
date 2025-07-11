@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatBotServer.Domain", "Cha
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatBotServer.Application", "ChatBotServer.Application\ChatBotServer.Application.csproj", "{C9D3F5B2-3E4F-5F6A-AC8D-2B3C4D5E6F7A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatBotServer.Tests", "ChatBotServer.Tests\ChatBotServer.Tests.csproj", "{DA4E6FC3-4F5A-6A7B-BD9E-3C4D5E6F7A8B}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,9 +39,5 @@ Global
 		{C9D3F5B2-3E4F-5F6A-AC8D-2B3C4D5E6F7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C9D3F5B2-3E4F-5F6A-AC8D-2B3C4D5E6F7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C9D3F5B2-3E4F-5F6A-AC8D-2B3C4D5E6F7A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DA4E6FC3-4F5A-6A7B-BD9E-3C4D5E6F7A8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DA4E6FC3-4F5A-6A7B-BD9E-3C4D5E6F7A8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DA4E6FC3-4F5A-6A7B-BD9E-3C4D5E6F7A8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DA4E6FC3-4F5A-6A7B-BD9E-3C4D5E6F7A8B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

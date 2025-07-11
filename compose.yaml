@@ -4,6 +4,7 @@
     environment:
       SA_PASSWORD: "YourStrong!Passw0rd"
       ACCEPT_EULA: "Y"
+      MSSQL_PID: "Express"
     ports:
       - "1433:1433"
     volumes:
@@ -20,6 +21,17 @@
       - "8080:8080"
     depends_on:
       - sqlserver
+    profiles:
+      - fullApp
+
+  chatbot_frontend:
+    build:
+      context: ./ChatBotClient
+      dockerfile: Dockerfile
+    ports:
+      - "4200:80"
+    depends_on:
+      - chatbot_backend.api
     profiles:
       - fullApp
 
