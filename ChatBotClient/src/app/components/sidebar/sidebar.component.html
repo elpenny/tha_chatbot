@@ -42,10 +42,5 @@
   <div class="empty-state" *ngIf="!isLoading && conversations.length === 0">
     <mat-icon class="empty-icon">chat_bubble_outline</mat-icon>
     <p>No conversations yet</p>
-    <button mat-raised-button 
-            color="primary"
-            (click)="onNewConversation()">
-      Start New Conversation
-    </button>
   </div>
 </div>
