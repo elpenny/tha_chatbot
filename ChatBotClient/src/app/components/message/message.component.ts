@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MarkdownModule } from 'ngx-markdown';
 import { ChatMessage } from '../../models/chat.model';
 import { CHAT_CONSTANTS } from '../../constants/chat.constants';
 
@@ -13,13 +14,21 @@ import { CHAT_CONSTANTS } from '../../constants/chat.constants';
     CommonModule,
     MatButtonModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MarkdownModule
   ],
   template: `
     <div class="message" 
          [ngClass]="{'user-message': message.isUser, 'bot-message': !message.isUser}">
       <div class="message-content">
-        {{ message.content }}
+        <!-- User messages: markdown rendering -->
+        <div *ngIf="message.isUser" class="user-text">
+          <markdown [data]="message.content"></markdown>
+        </div>
+        <!-- Bot messages: markdown rendering -->
+        <div *ngIf="!message.isUser" class="bot-text">
+          <markdown [data]="message.content"></markdown>
+        </div>
         <mat-spinner *ngIf="message.isTyping" [diameter]="constants.SIZES.SPINNER_DIAMETER"></mat-spinner>
       </div>
       <div class="message-actions" *ngIf="!message.isUser && !message.isTyping && message.messageId">

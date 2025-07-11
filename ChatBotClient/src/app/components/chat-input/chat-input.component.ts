@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { TextFieldModule } from '@angular/cdk/text-field';
 import { CHAT_CONSTANTS } from '../../constants/chat.constants';
 
 @Component({
@@ -14,16 +15,22 @@ import { CHAT_CONSTANTS } from '../../constants/chat.constants';
     FormsModule,
     MatInputModule,
     MatButtonModule,
-    MatIconModule
+    MatIconModule,
+    TextFieldModule
   ],
   template: `
     <div class="input-container">
       <mat-form-field class="message-input" appearance="outline">
-        <input matInput 
-               [(ngModel)]="message" 
-               [placeholder]="constants.MESSAGES.PLACEHOLDER_TEXT"
-               (keyup.enter)="onSendMessage()"
-               [disabled]="isLoading">
+        <textarea matInput 
+                  [(ngModel)]="message" 
+                  [placeholder]="constants.MESSAGES.PLACEHOLDER_TEXT"
+                  (keydown)="onKeyDown($event)"
+                  [disabled]="isLoading"
+                  rows="1"
+                  cdkTextareaAutosize
+                  #autosize="cdkTextareaAutosize"
+                  cdkAutosizeMinRows="1"
+                  cdkAutosizeMaxRows="6"></textarea>
       </mat-form-field>
       <button mat-fab 
               color="primary" 
@@ -49,6 +56,15 @@ export class ChatInputComponent {
 
   message = '';
   constants = CHAT_CONSTANTS;
+
+  onKeyDown(event: KeyboardEvent) {
+    // Enter without Shift = send message
+    // Shift+Enter = new line (default behavior)
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.onSendMessage();
+    }
+  }
 
   onSendMessage() {
     if (this.message.trim() && !this.isLoading) {
