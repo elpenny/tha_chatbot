@@ -2,6 +2,8 @@
   display: flex;
   gap: 12px;
   align-items: flex-start;
+  flex-shrink: 0;
+  margin-top: auto;
 }
 
 .message-input {

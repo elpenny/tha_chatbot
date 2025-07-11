@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild, ElementRef, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { ChatService, ChatMessageRequest } from '../../api/chat.service';
@@ -21,6 +21,10 @@ import { Subject, takeUntil, Subscription } from 'rxjs';
   styleUrls: ['./chat.component.scss']
 })
 export class ChatComponent implements OnInit, OnDestroy {
+  @ViewChild('messagesContainer') messagesContainer!: ElementRef;
+  @Output() conversationCreated = new EventEmitter<number>();
+  @Output() conversationUpdated = new EventEmitter<number>();
+  
   messages: ChatMessage[] = [];
   isLoading = false;
   conversationId: number | null = null;
@@ -116,12 +120,67 @@ export class ChatComponent implements OnInit, OnDestroy {
     return message.messageId || index;
   }
 
+  onConversationSelected(conversationId: number) {
+    if (this.conversationId === conversationId) {
+      return; // Already selected
+    }
+    
+    this.conversationId = conversationId;
+    this.loadConversationMessages(conversationId);
+  }
+
+  onNewConversation() {
+    this.conversationId = null;
+    this.messages = [];
+    this.isLoading = false;
+    if (this.currentStreamingSubscription) {
+      this.currentStreamingSubscription.unsubscribe();
+      this.currentStreamingSubscription = null;
+    }
+  }
+
+  private loadConversationMessages(conversationId: number) {
+    this.isLoading = true;
+    this.messages = [];
+    
+    this.chatService.getConversationHistory(conversationId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          if (result.messages) {
+            this.messages = result.messages.map(msg => ({
+              content: msg.content || '',
+              isUser: msg.role === CHAT_CONSTANTS.MESSAGE_ROLES.USER,
+              messageId: msg.id,
+              rating: msg.rating
+            }));
+          }
+          this.isLoading = false;
+          this.scrollToBottom();
+        },
+        error: (error) => {
+          console.error('Error loading conversation:', error);
+          this.isLoading = false;
+        }
+      });
+  }
+
+  private scrollToBottom() {
+    setTimeout(() => {
+      if (this.messagesContainer) {
+        this.messagesContainer.nativeElement.scrollTop = this.messagesContainer.nativeElement.scrollHeight;
+      }
+    }, 100);
+  }
+
   private handleSSEMessage(sseMessage: SSEMessage, botMessage: ChatMessage) {
     try {
       const data = JSON.parse(sseMessage.data);
       
       if (data.conversationId && !this.conversationId) {
         this.conversationId = data.conversationId;
+        // Emit event when a new conversation is created
+        this.conversationCreated.emit(data.conversationId);
       }
       
       if (data.content) {
@@ -134,6 +193,8 @@ export class ChatComponent implements OnInit, OnDestroy {
         this.isLoading = false;
         if (data.conversationId) {
           this.loadConversationHistory(data.conversationId);
+          // Emit event when conversation is updated with new message
+          this.conversationUpdated.emit(data.conversationId);
         }
         this.changeDetectorRef.detectChanges();
       }

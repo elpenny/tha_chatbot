@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
-import { ChatComponent } from './components/chat/chat.component';
+import { ChatContainerComponent } from './components/chat-container/chat-container.component';
 
 export const routes: Routes = [
-  { path: '', component: ChatComponent },
+  { path: '', component: ChatContainerComponent },
   { path: '**', redirectTo: '' }
 ];

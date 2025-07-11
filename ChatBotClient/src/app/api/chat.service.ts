@@ -8,6 +8,8 @@ import { SSEMessage } from '../models/chat.model';
 export type ChatMessageRequest = components['schemas']['ChatMessageRequest'];
 export type GetConversationHistoryResult = components['schemas']['GetConversationHistoryResult'];
 export type UpdateMessageRatingRequest = components['schemas']['UpdateMessageRatingRequest'];
+export type GetConversationListResult = components['schemas']['GetConversationListResult'];
+export type ConversationSummary = components['schemas']['ConversationSummary'];
 
 @Injectable({
   providedIn: 'root'
@@ -109,5 +111,12 @@ export class ChatService {
    */
   updateMessageRating(messageId: number, request: UpdateMessageRatingRequest): Observable<void> {
     return this.http.put<void>(`${this.baseUrl}/messages/${messageId}/rating`, request);
+  }
+
+  /**
+   * Get list of conversations
+   */
+  getConversationList(limit: number = 10): Observable<GetConversationListResult> {
+    return this.http.get<GetConversationListResult>(`${this.baseUrl}/conversations?limit=${limit}`);
   }
 }

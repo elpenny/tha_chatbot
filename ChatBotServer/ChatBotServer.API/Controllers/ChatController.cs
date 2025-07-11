@@ -151,4 +151,20 @@ public class ChatController(IMediator mediator) : ControllerBase
             
         return Ok();
     }
+
+    /// <summary>
+    /// Get a list of recent conversations
+    /// </summary>
+    /// <param name="limit">Maximum number of conversations to return (default: 10)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>List of conversation summaries</returns>
+    /// <response code="200">Conversations retrieved successfully</response>
+    [HttpGet("conversations")]
+    [ProducesResponseType(typeof(GetConversationListResult), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetConversationList([FromQuery] int limit = 10, CancellationToken cancellationToken = default)
+    {
+        var query = new GetConversationListQuery { Limit = limit };
+        var result = await mediator.Send(query, cancellationToken);
+        return Ok(result);
+    }
 }

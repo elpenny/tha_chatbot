@@ -13,6 +13,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Send a message to the chatbot and receive a streaming response */
         post: {
             parameters: {
                 query?: never;
@@ -20,6 +21,7 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
+            /** @description The chat message request containing content and optional conversation ID */
             requestBody?: {
                 content: {
                     "application/json": components["schemas"]["ChatMessageRequest"];
@@ -28,14 +30,14 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description OK */
+                /** @description Successful streaming response */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Bad Request */
+                /** @description Invalid request parameters */
                 400: {
                     headers: {
                         [name: string]: unknown;
@@ -59,18 +61,20 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Retrieve conversation history with all messages */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
+                    /** @description The conversation ID */
                     id: number;
                 };
                 cookie?: never;
             };
             requestBody?: never;
             responses: {
-                /** @description OK */
+                /** @description Conversation found and returned */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -81,7 +85,7 @@ export interface paths {
                         "text/json": components["schemas"]["GetConversationHistoryResult"];
                     };
                 };
-                /** @description Not Found */
+                /** @description Conversation not found */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -110,15 +114,18 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** Update the rating for a specific message */
         put: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
+                    /** @description The message ID */
                     id: number;
                 };
                 cookie?: never;
             };
+            /** @description Rating request (1 for thumbs up, -1 for thumbs down, null to remove rating) */
             requestBody?: {
                 content: {
                     "application/json": components["schemas"]["UpdateMessageRatingRequest"];
@@ -127,14 +134,14 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description OK */
+                /** @description Rating updated successfully */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content?: never;
                 };
-                /** @description Bad Request */
+                /** @description Invalid rating value */
                 400: {
                     headers: {
                         [name: string]: unknown;
@@ -145,7 +152,7 @@ export interface paths {
                         "text/json": components["schemas"]["ProblemDetails"];
                     };
                 };
-                /** @description Not Found */
+                /** @description Message not found */
                 404: {
                     headers: {
                         [name: string]: unknown;
@@ -158,6 +165,47 @@ export interface paths {
                 };
             };
         };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Chat/conversations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get list of recent conversations */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Maximum number of conversations to return (default: 10) */
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Conversations retrieved successfully */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GetConversationListResult"];
+                        "application/json": components["schemas"]["GetConversationListResult"];
+                        "text/json": components["schemas"]["GetConversationListResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -184,6 +232,18 @@ export interface components {
             /** Format: int32 */
             rating?: number | null;
         };
+        ConversationSummary: {
+            /** Format: int32 */
+            id?: number;
+            title?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string | null;
+            /** Format: int32 */
+            messageCount?: number;
+            lastMessage?: string | null;
+        };
         GetConversationHistoryResult: {
             /** Format: int32 */
             id?: number;
@@ -193,6 +253,9 @@ export interface components {
             /** Format: date-time */
             updatedAt?: string | null;
             messages?: components["schemas"]["ChatMessageResult"][] | null;
+        };
+        GetConversationListResult: {
+            conversations?: components["schemas"]["ConversationSummary"][] | null;
         };
         /**
          * Format: int32
