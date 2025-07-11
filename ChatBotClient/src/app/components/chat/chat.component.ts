@@ -143,6 +143,12 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.messages = [];
     
+    // Cancel any ongoing streaming
+    if (this.currentStreamingSubscription) {
+      this.currentStreamingSubscription.unsubscribe();
+      this.currentStreamingSubscription = null;
+    }
+    
     this.chatService.getConversationHistory(conversationId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -156,11 +162,13 @@ export class ChatComponent implements OnInit, OnDestroy {
             }));
           }
           this.isLoading = false;
+          this.changeDetectorRef.detectChanges();
           this.scrollToBottom();
         },
         error: (error) => {
           console.error('Error loading conversation:', error);
           this.isLoading = false;
+          this.changeDetectorRef.detectChanges();
         }
       });
   }
