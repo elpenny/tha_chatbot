@@ -15,6 +15,8 @@ A full-stack AI chatbot application built with Angular frontend and ASP.NET Core
 - **Responsive design** - Works on desktop and mobile devices
 - **Conversation sidebar** - Easy navigation between chat sessions
 - **Auto-scroll** - Messages automatically scroll to keep latest visible
+- **Markdown** - support for markdown formatting for both user and assistant
+- **Multi-line** - hit ENTER to send message, hit SHIFT+ENTER to add new line to input
 
 ### 🛠 Technical Features
 - **Clean architecture** - Separation of concerns with Domain/Application/Infrastructure layers
