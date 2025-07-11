@@ -2,11 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import type { components } from './types';
-
-export interface SSEMessage {
-  data: string;
-  type?: string;
-}
+import { SSEMessage } from '../models/chat.model';
 
 // Type aliases for convenience
 export type ChatMessageRequest = components['schemas']['ChatMessageRequest'];
