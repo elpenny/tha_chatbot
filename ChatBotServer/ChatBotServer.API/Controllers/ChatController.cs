@@ -35,7 +35,6 @@ public class ChatController(IMediator mediator) : ControllerBase
         
         try
         {
-            
             // Get streaming response through MediatR
             var streamingQuery = new GetChatResponseStreamingCommand
             {

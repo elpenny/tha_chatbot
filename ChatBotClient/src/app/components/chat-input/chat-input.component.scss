@@ -1,7 +1,7 @@
 .input-container {
   display: flex;
   gap: 12px;
-  align-items: flex-end;
+  align-items: flex-start;
   flex-shrink: 0;
   margin-top: auto;
 }
@@ -10,7 +10,8 @@
   flex: 1;
 }
 
-// Ensure button stays aligned with the input field
+// Position button to align with top border of textarea
 button[mat-fab] {
-  margin-bottom: 8px;
+  flex-shrink: 0;
+  margin-top: 0px; // Align with top border of mat-form-field outline
 }

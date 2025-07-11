@@ -18,7 +18,7 @@ export const CHAT_CONSTANTS = {
   MESSAGES: {
     RESPONSE_CANCELLED: 'Response cancelled.',
     ERROR_GENERIC: 'Sorry, something went wrong. Please try again.',
-    PLACEHOLDER_TEXT: 'Start chatting...',
+    PLACEHOLDER_TEXT: 'Type your message... (Enter to send, Shift+Enter for new line)',
     CHAT_TITLE: 'AI Chatbot'
   },
   MESSAGE_ROLES: {
